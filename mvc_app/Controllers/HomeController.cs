@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace mvc_app.Controllers
 {
@@ -20,7 +22,6 @@ namespace mvc_app.Controllers
             return View(users);
         }
 
-        // ВИПРАВЛЕНО: Прибрали ("{id}"), щоб не ламати стандартний маршрут MVC
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -42,6 +43,7 @@ namespace mvc_app.Controllers
         {
             if (!ModelState.IsValid)
                 return View(user);
+
             await _userService.CreateUserAsync(user);
             return RedirectToAction(nameof(Index));
         }
@@ -52,6 +54,7 @@ namespace mvc_app.Controllers
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
                 return NotFound();
+
             return View(user);
         }
 
@@ -82,14 +85,22 @@ namespace mvc_app.Controllers
         [HttpPost, ActionName("Delete")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             var deletedUser = await _userService.DeleteUserAsync(id);
             if (deletedUser == null)
                 return NotFound();
 
+            if (currentUserIdClaim != null && currentUserIdClaim == id.ToString())
+            {
+                await HttpContext.SignOutAsync("CookieAuth");
+
+                return RedirectToAction("Welcome", "Account");
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
-        // Окремий атрибут [Authorize] прибрали, бо він уже діє на весь клас
         [HttpGet]
         public IActionResult Tools()
         {
