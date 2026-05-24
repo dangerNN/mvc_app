@@ -1,0 +1,32 @@
+﻿@model IEnumerable<User>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+<table class="table table-dark">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>E-mail</th>
+            <th>Tools</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>
+                    <a class="btn btn-primary" href="@Url.Action("Create")">Create</a>
+                    <a class="btn btn-success" href="@Url.Action("Update", new { id = user.Id })">Update</a>
+                    <a class="btn btn-danger" href="@Url.Action("Delete", new { id = user.Id })">Delete</a>
+                    <a class="btn btn-info" href="@Url.Action("Details", new { id = user.Id })">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+

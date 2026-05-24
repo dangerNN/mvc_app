@@ -1,0 +1,19 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+<div class="container text-center" style="margin-top: 8%;">
+    <div class="card shadow-lg p-5 bg-dark text-white rounded-4 border-0">
+        <h1 class="display-4 mb-3 fw-bold text-info">Добро пожаловать в mvc_app!</h1>
+        <p class="lead mb-5 text-secondary fs-4">Для продолжения работы, пожалуйста, войдите в систему или зарегистрируйтесь.</p>
+        
+        <div class="d-flex justify-content-center gap-4">
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-3 shadow">
+                Войти
+            </a>
+            <a asp-controller="Account" asp-action="Register" class="btn btn-success btn-lg px-5 py-3 fw-bold rounded-3 shadow">
+                Регистрация
+            </a>
+        </div>
+    </div>
+</div>
