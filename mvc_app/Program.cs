@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+
 namespace mvc_app
 {
     public class Program
@@ -10,27 +11,28 @@ namespace mvc_app
             builder.Services.AddDbContext<UsersContext>();
             builder.Services.AddScoped<IUserService, UserService>();
 
-            // ИСПРАВЛЕННЫЙ БЛОК: Явно указываем "CookieAuth" как дефолтную схему
             builder.Services.AddAuthentication("CookieAuth")
                 .AddCookie("CookieAuth", options =>
                 {
-                    options.LoginPath = "/Account/Login";
+                    options.LoginPath = "/login.html";
                     options.Cookie.Name = "MyMvcAppAuthCookie";
                 });
 
             builder.Services.AddAuthorization();
-            builder.Services.AddControllersWithViews();
+
+            builder.Services.AddControllers();
 
             var app = builder.Build();
+
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.UseRouting();
 
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Account}/{action=Welcome}/{id?}");
+            app.MapControllers();
 
             app.Run();
         }

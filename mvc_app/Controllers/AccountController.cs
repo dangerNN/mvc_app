@@ -1,95 +1,33 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace mvc_app.Controllers
 {
-    public class AccountController : Controller
+    [ApiController]
+    [Route("api/auth")]
+    public class AccountController : ControllerBase
     {
-        private readonly UsersContext _context;
+        private readonly IUserService _userService;
 
-        public AccountController(UsersContext context)
+        public AccountController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
-        // 1. НОВАЯ СТАРТОВАЯ СТРАНИЦА (Доступна всем)
-        [HttpGet]
-        public IActionResult Welcome()
+        [HttpPost("login")]
+        public async Task<IActionResult> ApiLogin([FromBody] LoginDto loginData)
         {
-            // Если пользователь ОУЖЕ вошел, сразу отправляем его на главную
-            if (User.Identity != null && User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-            return View();
-        }
-
-        // --- РЕЕСТРАЦИЯ ---
-        [HttpGet]
-        public IActionResult Register() => View();
-
-        [HttpPost]
-        public async Task<IActionResult> Register(User user)
-        {
-            // Проверяем самые важные поля
-            if (string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Password))
-            {
-                ModelState.AddModelError("", "Email и Пароль обязательны для заполнения!");
-                return View(user);
-            }
-
-            // Проверяем дубликаты по Email
-            var userExists = await _context.Users.AnyAsync(u => u.Email == user.Email);
-            if (userExists)
-            {
-                ModelState.AddModelError("", "Пользователь с таким Email уже зарегистрирован!");
-                return View(user);
-            }
-
-            // Принудительно заполняем Name, если оно пустое, чтобы не было ошибок в БД
-            if (string.IsNullOrEmpty(user.Name))
-            {
-                user.Name = user.Email.Split('@')[0];
-            }
-
-            // Добавляем в базу и ОБЯЗАТЕЛЬНО сохраняем
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            // После успешной регистрации сразу перенаправляем на Вход
-            return RedirectToAction("Login");
-        }
-
-        // --- ВХОД (ЛОГИН) ---
-        [HttpGet]
-        public IActionResult Login() => View();
-
-        [HttpPost]
-        public async Task<IActionResult> Login(string email, string password)
-        {
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-            {
-                ModelState.AddModelError("", "Заполните все поля!");
-                return View();
-            }
-
-            // Ищем пользователя (обрезаем пробелы на случай опечаток)
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower() && u.Password == password);
+            var users = await _userService.GetUsersAsync();
+            var user = users.FirstOrDefault(u => u.Email == loginData.Email && u.Password == loginData.Password);
 
             if (user == null)
-            {
-                ModelState.AddModelError("", "Неверный Email или Пароль!");
-                return View();
-            }
+                return Unauthorized(new { message = "Неверный логин или пароль" });
 
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name ?? user.Email),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Name, user.Name ?? "Студент")
             };
 
             var identity = new ClaimsIdentity(claims, "CookieAuth");
@@ -97,14 +35,20 @@ namespace mvc_app.Controllers
 
             await HttpContext.SignInAsync("CookieAuth", principal);
 
-            return RedirectToAction("Index", "Home");
+            return Ok(new { message = "Успешный вход", userName = user.Name });
         }
 
-        // --- ВЫХОД ---
-        public async Task<IActionResult> Logout()
+        [HttpGet("logout")]
+        public async Task<IActionResult> ApiLogout()
         {
             await HttpContext.SignOutAsync("CookieAuth");
-            return RedirectToAction("Welcome", "Account"); // После выхода — на стартовую
+            return Redirect("/login.html");
         }
+    }
+
+    public class LoginDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
 }

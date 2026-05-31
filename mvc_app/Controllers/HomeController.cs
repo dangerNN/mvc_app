@@ -6,7 +6,9 @@ using System.Security.Claims;
 namespace mvc_app.Controllers
 {
     [Authorize]
-    public class HomeController : Controller
+    [ApiController]
+    [Route("api/students")]
+    public class HomeController : ControllerBase
     {
         private readonly IUserService _userService;
 
@@ -19,70 +21,45 @@ namespace mvc_app.Controllers
         public async Task<IActionResult> Index()
         {
             var users = await _userService.GetUsersAsync();
-            return View(users);
+            return Ok(users);
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> Details(int id)
         {
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
                 return NotFound();
 
-            return View(user);
+            return Ok(user);
         }
 
-        [HttpGet]
-        public IActionResult Create()
-        {
-            return View();
-        }
-
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<IActionResult> Create(User user)
+        public async Task<IActionResult> Create([FromBody] User user)
         {
             if (!ModelState.IsValid)
-                return View(user);
+                return BadRequest(ModelState);
 
             await _userService.CreateUserAsync(user);
-            return RedirectToAction(nameof(Index));
+
+            return StatusCode(201, user);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Update(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] User user)
         {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updatedUser = await _userService.UpdateUserAsync(id, user);
+            if (updatedUser == null)
                 return NotFound();
 
-            return View(user);
+            return Ok(updatedUser);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Update(int id, User user)
-        {
-            if (ModelState.IsValid)
-            {
-                var updatedUser = await _userService.UpdateUserAsync(id, user);
-                if (updatedUser == null)
-                    return NotFound();
-
-                return RedirectToAction(nameof(Index));
-            }
-            return View(user);
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
-                return NotFound();
-
-            return View(user);
-        }
-
-        [HttpPost, ActionName("Delete")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -94,17 +71,16 @@ namespace mvc_app.Controllers
             if (currentUserIdClaim != null && currentUserIdClaim == id.ToString())
             {
                 await HttpContext.SignOutAsync("CookieAuth");
-
-                return RedirectToAction("Welcome", "Account");
+                return Ok(new { message = "User deleted and signed out.", selfDelete = true });
             }
 
-            return RedirectToAction(nameof(Index));
+            return Ok(new { message = "Студент успешно удален", selfDelete = false });
         }
 
-        [HttpGet]
+        [HttpGet("tools")]
         public IActionResult Tools()
         {
-            return View();
+            return Ok(new { info = "Это секретные инструменты API" });
         }
     }
 }

@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin-top: 10%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container login-container">
+        <div class="card shadow p-4 bg-dark text-white rounded-3">
+            <h3 class="text-center mb-4 text-info fw-bold">Авторизация</h3>
+
+            <form id="loginForm" onsubmit="submitLogin(event)">
+                <div class="mb-3">
+                    <label class="form-label">E-mail (Логин)</label>
+                    <input type="email" id="loginEmail" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" id="loginPassword" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-info w-100 fw-bold text-dark mb-3">Войти</button>
+            </form>
+
+            <div class="text-center">
+                <small class="text-muted">Еще нет аккаунта? <a href="/register.html" class="text-info">Регистрация</a></small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function submitLogin(event) {
+            event.preventDefault();
+
+            let credentials = {
+                email: document.getElementById("loginEmail").value,
+                password: document.getElementById("loginPassword").value
+            };
+
+            try {
+                let response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentials)
+                });
+
+                if (response.ok) {
+                    window.location.href = "/index.html";
+                } else {
+                    alert("Неверный логин или пароль!");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Ошибка сервера при авторизации");
+            }
+        }
+    </script>
+</body>
+</html>
